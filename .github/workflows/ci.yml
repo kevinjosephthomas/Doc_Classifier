@@ -19,10 +19,10 @@ jobs:
         python-version: '3.11'
 
     - name: Install Backend Dependencies
-      run: pip install -r requirements.txt
+      run: pip install -r backend/requirements.txt
 
     - name: Run Backend Unit Tests
-      run: pytest tests/ -v
+      run: cd backend && pytest ../tests/ -v
 
   frontend-build:
     runs-on: ubuntu-latest
