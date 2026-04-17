@@ -64,17 +64,50 @@ jobs:
       with:
         context: ./backend
         file: ./backend/Dockerfile
-        push: true
+        push: false
+        load: true
         tags: |
           ${{ secrets.DOCKER_USERNAME }}/doc-classifier-backend:latest
           ${{ secrets.DOCKER_USERNAME }}/doc-classifier-backend:${{ github.sha }}
+
+    - name: Install Trivy
+      run: |
+        sudo apt-get update
+        sudo apt-get install wget apt-transport-https gnupg lsb-release
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+        sudo apt-get update
+        sudo apt-get install trivy
+
+    - name: Scan Backend Image for Vulnerabilities
+      run: |
+        trivy image --exit-code 1 --no-progress --format table --severity HIGH,CRITICAL ${{ secrets.DOCKER_USERNAME }}/doc-classifier-backend:latest
+
+    - name: Push Backend Image
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/doc-classifier-backend:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/doc-classifier-backend:${{ github.sha }}
 
     - name: Build and Push Frontend Image
       uses: docker/build-push-action@v5
       with:
         context: ./frontend
         file: ./frontend/Dockerfile
-        push: true
+        push: false
+        load: true
         tags: |
           ${{ secrets.DOCKER_USERNAME }}/doc-classifier-frontend:latest
           ${{ secrets.DOCKER_USERNAME }}/doc-classifier-frontend:${{ github.sha }}
+
+    - name: Scan Frontend Image for Vulnerabilities
+      run: |
+        trivy image --exit-code 1 --no-progress --format table --severity HIGH,CRITICAL ${{ secrets.DOCKER_USERNAME }}/doc-classifier-frontend:latest
+
+    - name: Push Frontend Image
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/doc-classifier-frontend:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/doc-classifier-frontend:${{ github.sha }}
+
+    - name: Scan Kubernetes Manifests
+      run: |
+        trivy config --exit-code 1 --format table k8s/
