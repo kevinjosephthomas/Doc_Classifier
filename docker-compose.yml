@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: doc_classifier_backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Bake the API URL into the SPA at bundle time
+        - VITE_API_URL=http://localhost:8000
+    container_name: doc_classifier_frontend
+    ports:
+      - "5173:80"    # Maps host 5173 to Nginx 80
+    depends_on:
+      - backend
+    restart: unless-stopped

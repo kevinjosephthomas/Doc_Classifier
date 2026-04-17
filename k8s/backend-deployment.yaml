@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: doc-classifier-backend
+  template:
+    metadata:
+      labels:
+        app: doc-classifier-backend
+    spec:
+      containers:
+      - name: backend
+        image: kevinjosephthomas/doc-classifier-backend:v2
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+        - name: GROQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: GROQ_API_KEY
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
